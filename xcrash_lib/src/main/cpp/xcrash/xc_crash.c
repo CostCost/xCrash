@@ -675,6 +675,7 @@ static void xc_crash_init_callback(JNIEnv *env)
     }
 }
 
+// 初始化 native 层的崩溃监听
 int xc_crash_init(JNIEnv *env,
                   int rethrow,
                   unsigned int logcat_system_lines,
@@ -734,7 +735,7 @@ int xc_crash_init(JNIEnv *env,
     if(0 != pipe2(xc_crash_child_notifier, O_CLOEXEC)) return XCC_ERRNO_SYS;
 #endif
     
-    //register signal handler
+    // 注册 native 崩溃信号量
     return xcc_signal_crash_register(xc_crash_signal_handler);
 }
 

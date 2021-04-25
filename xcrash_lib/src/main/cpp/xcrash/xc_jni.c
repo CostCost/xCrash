@@ -159,7 +159,7 @@ static jint xc_jni_init(JNIEnv       *env,
             }
         }
 
-        //crash init
+        // native 层的 crash 初始化
         r_crash = xc_crash_init(env,
                                 crash_rethrow ? 1 : 0,
                                 (unsigned int)crash_logcat_system_lines,
@@ -177,7 +177,7 @@ static jint xc_jni_init(JNIEnv       *env,
     
     if(trace_enable)
     {
-        //trace init
+        // 做 anr 相关的初始化
         r_trace = xc_trace_init(env,
                             trace_rethrow ? 1 : 0,
                             (unsigned int)trace_logcat_system_lines,
@@ -299,6 +299,7 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved)
     if(NULL == (cls = (*env)->FindClass(env, XC_JNI_CLASS_NAME))) return -1;
     if((*env)->RegisterNatives(env, cls, xc_jni_methods, sizeof(xc_jni_methods) / sizeof(xc_jni_methods[0]))) return -1;
 
+    // 虚拟机？
     xc_common_set_vm(vm, env, cls);
 
     return XC_JNI_VERSION;

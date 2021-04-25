@@ -57,6 +57,7 @@ static xcc_signal_crash_info_t xcc_signal_crash_info[] =
     {.signum = SIGSTKFLT}
 };
 
+// 注册 native 层信号量
 int xcc_signal_crash_register(void (*handler)(int, siginfo_t *, void *))
 {
     stack_t ss;
@@ -70,7 +71,8 @@ int xcc_signal_crash_register(void (*handler)(int, siginfo_t *, void *))
     sigfillset(&act.sa_mask);
     act.sa_sigaction = handler;
     act.sa_flags = SA_RESTART | SA_SIGINFO | SA_ONSTACK;
-    
+
+    // 挨个注册和监听
     size_t i;
     for(i = 0; i < sizeof(xcc_signal_crash_info) / sizeof(xcc_signal_crash_info[0]); i++)
         if(0 != sigaction(xcc_signal_crash_info[i].signum, &act, &(xcc_signal_crash_info[i].oldact)))
@@ -137,6 +139,7 @@ int xcc_signal_trace_register(void (*handler)(int, siginfo_t *, void *))
     sigfillset(&act.sa_mask);
     act.sa_sigaction = handler;
     act.sa_flags = SA_RESTART | SA_SIGINFO;
+    // 监听 SIGQUIT 信号量
     if(0 != sigaction(SIGQUIT, &act, &xcc_signal_trace_oldact))
     {
         pthread_sigmask(SIG_SETMASK, &xcc_signal_trace_oldset, NULL);

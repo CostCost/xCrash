@@ -164,7 +164,7 @@ public final class XCrash {
                 params.javaCallback);
         }
 
-        //init ANR handler (API level < 21)
+        // API < 21 的时候的 ANR 获取方式
         if (params.enableAnrHandler && Build.VERSION.SDK_INT < 21) {
             AnrHandler.getInstance().initialize(
                 ctx,
@@ -182,7 +182,7 @@ public final class XCrash {
                 params.anrCallback);
         }
 
-        //init native crash handler / ANR handler (API level >= 21)
+        // API >= 21 时候的 ANR 获取方式
         int r = Errno.OK;
         if (params.enableNativeCrashHandler || (params.enableAnrHandler && Build.VERSION.SDK_INT >= 21)) {
             r = NativeHandler.getInstance().initialize(

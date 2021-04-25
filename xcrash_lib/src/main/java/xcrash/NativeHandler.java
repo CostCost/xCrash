@@ -106,6 +106,7 @@ class NativeHandler {
 
         //init native lib
         try {
+            // 初始化 native 库
             int r = nativeInit(
                 Build.VERSION.SDK_INT,
                 Build.VERSION.RELEASE,
@@ -214,6 +215,7 @@ class NativeHandler {
         }
     }
 
+    // native 层 ANR 监听，初始化完成之后的回调
     // do NOT obfuscate this method
     @SuppressWarnings("unused")
     private static void traceCallback(String logPath, String emergency) {
@@ -283,6 +285,7 @@ class NativeHandler {
             boolean crashDumpAllThreads,
             int crashDumpAllThreadsCountMax,
             String[] crashDumpAllThreadsWhiteList,
+            // trace 即 anr 相关的定义
             boolean traceEnable,
             boolean traceRethrow,
             int traceLogcatSystemLines,

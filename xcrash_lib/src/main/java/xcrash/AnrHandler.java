@@ -77,7 +77,7 @@ class AnrHandler {
                     boolean checkProcessState, int logcatSystemLines, int logcatEventsLines, int logcatMainLines,
                     boolean dumpFds, boolean dumpNetworkInfo, ICrashCallback callback) {
 
-        //check API level
+        //check API level，21 以下使用这种方式监听
         if (Build.VERSION.SDK_INT >= 21) {
             return;
         }
@@ -96,12 +96,14 @@ class AnrHandler {
         this.dumpNetworkInfo = dumpNetworkInfo;
         this.callback = callback;
 
+        // 监听 anr 目录
         fileObserver = new FileObserver("/data/anr/", CLOSE_WRITE) {
             public void onEvent(int event, String path) {
                 try {
                     if (path != null) {
                         String filepath = "/data/anr/" + path;
                         if (filepath.contains("trace")) {
+                            // 处理 ANR
                             handleAnr(filepath);
                         }
                     }
@@ -146,7 +148,7 @@ class AnrHandler {
             }
         }
 
-        //get trace
+        // 读取 trace 文件内容
         String trace = getTrace(filepath, anrTime.getTime());
         if (TextUtils.isEmpty(trace)) {
             return;
@@ -181,6 +183,7 @@ class AnrHandler {
         if (logFile != null) {
             RandomAccessFile raf = null;
             try {
+                // 使用 RandomAccessFile 进行随机读写，而不是拼接了字符串之后再读写
                 raf = new RandomAccessFile(logFile, "rws");
 
                 //write emergency info
@@ -241,6 +244,7 @@ class AnrHandler {
             + "\n\n";
     }
 
+    // 解析 ANR 日志
     private String getTrace(String filepath, long anrTime) {
 
         // "\n\n----- pid %d at %04d-%02d-%02d %02d:%02d:%02d -----\n"

@@ -285,6 +285,7 @@ static int xc_trace_write_header(int fd, uint64_t trace_time)
     return xcc_util_write_format(fd, "pid: %d  >>> %s <<<\n\n", xc_common_process_id, xc_common_process_name);
 }
 
+// dump 操作
 static void *xc_trace_dumper(void *arg)
 {
     JNIEnv         *env = NULL;
@@ -308,7 +309,7 @@ static void *xc_trace_dumper(void *arg)
 
     while(1)
     {
-        //block here, waiting for sigquit
+        // 读取 xc_trace_notifier，会发生阻塞
         XCC_UTIL_TEMP_FAILURE_RETRY(read(xc_trace_notifier, &data, sizeof(data)));
         
         //check if process already crashed
@@ -351,6 +352,7 @@ static void *xc_trace_dumper(void *arg)
         {
             if(xc_trace_is_lollipop)
                 xc_trace_libart_dbg_suspend();
+            // 开始 dump
             xc_trace_libart_runtime_dump(*xc_trace_libart_runtime_instance, xc_trace_libcpp_cerr);
             if(xc_trace_is_lollipop)
                 xc_trace_libart_dbg_resume();
@@ -386,6 +388,7 @@ static void *xc_trace_dumper(void *arg)
         //Do we need to implement an emergency buffer for disk exhausted?
         if(NULL == xc_trace_cb_method) continue;
         if(NULL == (j_pathname = (*env)->NewStringUTF(env, pathname))) continue;
+        // 回调结果
         (*env)->CallStaticVoidMethod(env, xc_common_cb_class, xc_trace_cb_method, j_pathname, NULL);
         XC_JNI_IGNORE_PENDING_EXCEPTION();
         (*env)->DeleteLocalRef(env, j_pathname);
@@ -414,6 +417,7 @@ static void xc_trace_handler(int sig, siginfo_t *si, void *uc)
     }
 }
 
+// 初始化 java 层的回调信息
 static void xc_trace_init_callback(JNIEnv *env)
 {
     if(NULL == xc_common_cb_class) return;
@@ -437,7 +441,7 @@ int xc_trace_init(JNIEnv *env,
     int r;
     pthread_t thd;
 
-    //capture SIGQUIT only for ART
+    // 只针对 ART 虚拟机监听 SIGQUIT 信号
     if(xc_common_api_level < 21) return 0;
 
     //is Android Lollipop (5.x)?
@@ -451,16 +455,16 @@ int xc_trace_init(JNIEnv *env,
     xc_trace_dump_fds = dump_fds;
     xc_trace_dump_network_info = dump_network_info;
 
-    //init for JNI callback
+    // 初始化回调
     xc_trace_init_callback(env);
 
-    //create event FD
+    // 创建文件描述符，类似于阻塞队列，调用 read/write 的时候将会阻塞，是一种通信机制，效果上看像是 EventBus
     if(0 > (xc_trace_notifier = eventfd(0, EFD_CLOEXEC))) return XCC_ERRNO_SYS;
 
-    //register signal handler
+    // 注册信号量，这里的 xc_trace_handler 是一个函数，对 xc_trace_notifier 写入，看上去像函数式编程
     if(0 != (r = xcc_signal_trace_register(xc_trace_handler))) goto err2;
 
-    //create thread for dump trace
+    // 就类似于创建一个线程并把 runnable 塞进去的过程，xc_trace_dumper 中会对 xc_trace_notifier 进行监听
     if(0 != (r = pthread_create(&thd, NULL, xc_trace_dumper, NULL))) goto err1;
 
     return 0;

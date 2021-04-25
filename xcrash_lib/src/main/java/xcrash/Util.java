@@ -296,9 +296,11 @@ class Util {
         int pid = android.os.Process.myPid();
         long poll = timeoutMs / 500;
         for (int i = 0; i < poll; i++) {
+            // 返回当前发生错误的进程的信息
             List<ActivityManager.ProcessErrorStateInfo> processErrorList = am.getProcessesInErrorState();
             if (processErrorList != null) {
                 for (ActivityManager.ProcessErrorStateInfo errorStateInfo : processErrorList) {
+                    // 通过进程 id 和错误类型判断是否为 ANR
                     if (errorStateInfo.pid == pid && errorStateInfo.condition == ActivityManager.ProcessErrorStateInfo.NOT_RESPONDING) {
                         return true;
                     }
